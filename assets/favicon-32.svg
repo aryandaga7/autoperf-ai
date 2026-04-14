@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- AutoPerf favicon 32x32 — medium crossbar gap -->
+  <rect width="32" height="32" rx="6" fill="#000"/>
+  <path d="M16,4 L3,28 L29,28 Z M10.6,14 L21.4,14 L24.1,19 L7.9,19 Z" fill="#fff" fill-rule="evenodd"/>
+</svg>

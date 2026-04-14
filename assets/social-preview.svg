@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <!-- GitHub Social Preview — 1280x640 -->
+  <rect width="1280" height="640" fill="#000"/>
+
+  <!-- Performance Delta mark (centered, large) -->
+  <g transform="translate(540, 140)">
+    <path d="M100,0 L0,180 L200,180 Z M50,90 L150,90 L160,108 L40,108 Z" fill="#fff" fill-rule="evenodd"/>
+  </g>
+
+  <!-- "autoperf" text -->
+  <text x="640" y="400" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="72" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="-3">autoperf</text>
+
+  <!-- Tagline -->
+  <text x="640" y="460" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="28" font-weight="400" fill="#888" text-anchor="middle" letter-spacing="-0.5">Autonomous AI Agent Optimizer</text>
+
+  <!-- Subtle bottom accent line -->
+  <rect x="560" y="510" width="160" height="1" fill="#333"/>
+</svg>

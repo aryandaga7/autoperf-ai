@@ -1,0 +1,15 @@
+{
+  "name": "autoperf-ai-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Autonomous performance optimization for AI agents",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=packages/cli",
+    "test": "npm run test --workspace=packages/cli",
+    "typecheck": "tsc --noEmit --project packages/cli/tsconfig.json"
+  },
+  "license": "MIT"
+}

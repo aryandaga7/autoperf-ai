@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoPerf Report</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-card: #141414;
+    --bg-hover: #1a1a1a;
+    --border: #262626;
+    --text: #ededed;
+    --text-muted: #888;
+    --text-dim: #555;
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,0.1);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.1);
+    --amber: #f59e0b;
+    --amber-bg: rgba(245,158,11,0.1);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.1);
+    --chart-accepted: #22c55e;
+    --chart-rejected: #ef4444;
+    --chart-baseline: #3b82f6;
+    --chart-rebaseline: #f59e0b;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #fafafa;
+      --bg-card: #ffffff;
+      --bg-hover: #f5f5f5;
+      --border: #e5e5e5;
+      --text: #171717;
+      --text-muted: #737373;
+      --text-dim: #a3a3a3;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Header */
+  .header { margin-bottom: 32px; }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 4px;
+  }
+  .header .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+
+  /* Metric Strip */
+  .metric-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .metric-card .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .metric-card .values {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .metric-card .before {
+    font-size: 14px;
+    color: var(--text-dim);
+    text-decoration: line-through;
+  }
+  .metric-card .after {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+  .metric-card .delta {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .delta-positive { color: var(--green); }
+  .delta-negative { color: var(--red); }
+  .delta-neutral { color: var(--text-muted); }
+
+  /* Chart */
+  .chart-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .chart-section h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .chart-section .chart-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .chart-controls {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  .chart-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .chart-btn.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  .chart-container {
+    width: 100%;
+    height: 280px;
+    position: relative;
+  }
+  .chart-container svg { width: 100%; height: 100%; }
+  .chart-tooltip {
+    position: absolute;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .chart-tooltip.visible { opacity: 1; }
+
+  /* Iteration List */
+  .iterations-section { margin-bottom: 32px; }
+  .iterations-section h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .iter-timeline {
+    position: relative;
+    padding-left: 24px;
+  }
+  .iter-timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border);
+  }
+  .iter-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+    transition: background 0.15s;
+  }
+  .iter-card:hover { background: var(--bg-hover); }
+  .iter-dot {
+    position: absolute;
+    left: -20px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+  .iter-dot.accepted { background: var(--green); border-color: var(--green); }
+  .iter-dot.rejected { background: transparent; border-color: var(--red); }
+  .iter-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .iter-header .iter-num {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .iter-header .iter-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .iter-strategy {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .iter-delta {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .iter-insight {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Baseline card */
+  .baseline-card {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+    background: var(--bg-card);
+  }
+  .baseline-card .iter-dot {
+    background: var(--blue);
+    border-color: var(--blue);
+  }
+  .baseline-metrics {
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .baseline-metrics span { color: var(--text); font-weight: 500; }
+
+  /* Details section */
+  .details-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .details-section h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .details-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .details-list li {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 4px 0;
+  }
+  .details-list li::before {
+    content: '→ ';
+    color: var(--text-dim);
+  }
+
+  /* Query table (eval mode) */
+  .query-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .query-table th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .query-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .query-table tr:last-child td { border-bottom: none; }
+  .query-table .query-text {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .query-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  .footer a { color: var(--text-muted); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .metric-strip { grid-template-columns: 1fr; }
+    .metric-card .after { font-size: 22px; }
+    .baseline-metrics { flex-direction: column; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+// Data is injected by generate-report.ts — replaced at build time
+const DATA = window.__AUTOPERF_DATA__;
+
+// ── Formatters ────────────────────────────────────────────────────
+
+function fmtCost(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (n < 0.001) return '$' + n.toFixed(5);
+  if (n < 1) return '$' + n.toFixed(4);
+  return '$' + n.toFixed(2);
+}
+
+function fmtLatency(ms) {
+  if (ms == null || isNaN(ms)) return '—';
+  if (ms < 1000) return Math.round(ms) + 'ms';
+  return (ms / 1000).toFixed(1) + 's';
+}
+
+function fmtQuality(q) {
+  if (q == null || isNaN(q)) return '—';
+  return q.toFixed(2) + '/5';
+}
+
+function fmtDelta(before, after, metric) {
+  if (!before || !after || before === 0) return '';
+  const pct = ((after - before) / before * 100);
+  const sign = pct > 0 ? '+' : '';
+  const formatted = sign + pct.toFixed(1) + '%';
+
+  // For cost/latency, negative is good. For quality, positive is good.
+  if (metric === 'quality') {
+    return { text: formatted, type: pct >= 0 ? 'positive' : 'negative' };
+  }
+  return { text: formatted, type: pct <= 0 ? 'positive' : 'negative' };
+}
+
+function fmtTokens(n) {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ── Render Metric Strip ───────────────────────────────────────────
+
+function renderMetricStrip() {
+  const b = DATA.baseline;
+  const c = DATA.currentBest;
+  const isEvalOnly = DATA.mode === 'eval';
+
+  const metrics = [
+    {
+      label: 'Cost',
+      before: fmtCost(b.cost),
+      after: fmtCost(c.cost),
+      delta: isEvalOnly ? null : fmtDelta(b.cost, c.cost, 'cost'),
+    },
+    {
+      label: 'Latency',
+      before: fmtLatency(b.latency),
+      after: fmtLatency(c.latency),
+      delta: isEvalOnly ? null : fmtDelta(b.latency, c.latency, 'latency'),
+    },
+    {
+      label: 'Quality',
+      before: fmtQuality(b.quality),
+      after: fmtQuality(c.quality),
+      delta: isEvalOnly ? null : fmtDelta(b.quality, c.quality, 'quality'),
+    },
+  ];
+
+  let html = '<div class="metric-strip">';
+  for (const m of metrics) {
+    const deltaHtml = m.delta
+      ? `<div class="delta delta-${m.delta.type}">${escHtml(m.delta.text)}</div>`
+      : '';
+    const beforeHtml = isEvalOnly ? '' : `<span class="before">${escHtml(m.before)}</span>`;
+    html += `
+      <div class="metric-card">
+        <div class="label">${escHtml(m.label)}</div>
+        <div class="values">
+          ${beforeHtml}
+          <span class="after">${escHtml(m.after)}</span>
+        </div>
+        ${deltaHtml}
+      </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+// ── SVG Journey Chart ─────────────────────────────────────────────
+
+function renderJourneyChart() {
+  if (DATA.mode === 'eval' || DATA.iterations.length === 0) return '';
+
+  const modes = ['cost', 'latency', 'quality'];
+  const id = 'journey-chart';
+
+  let html = `
+    <div class="chart-section">
+      <h2>Optimization Journey</h2>
+      <div class="chart-subtitle">Metric trajectory across iterations</div>
+      <div class="chart-controls">
+        ${modes.map((m, i) =>
+          `<button class="chart-btn${i === 0 ? ' active' : ''}" data-mode="${m}" onclick="switchChartMode('${m}')">${m[0].toUpperCase() + m.slice(1)}</button>`
+        ).join('')}
+      </div>
+      <div class="chart-container" id="${id}">
+        <div class="chart-tooltip" id="chart-tooltip"></div>
+      </div>
+    </div>`;
+
+  return html;
+}
+
+function buildChartData(mode) {
+  const b = DATA.baseline;
+  const baseVal = mode === 'cost' ? b.cost : mode === 'latency' ? b.latency : b.quality;
+
+  // Points: baseline + each iteration
+  const points = [{ x: 0, y: baseVal, label: 'Baseline', status: 'baseline' }];
+
+  // Track accepted path
+  let currentBest = baseVal;
+
+  for (const iter of DATA.iterations) {
+    const m = iter.metrics;
+    if (!m) continue;
+    const val = mode === 'cost' ? m.cost : mode === 'latency' ? m.latency : m.quality;
+    points.push({
+      x: iter.index,
+      y: val,
+      label: `Iter ${iter.index}: ${iter.name}`,
+      status: iter.status,
+      delta: iter.delta,
+    });
+    if (iter.status === 'accepted') {
+      currentBest = val;
+    }
+  }
+
+  return points;
+}
+
+function drawChart(containerId, mode) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const points = buildChartData(mode);
+  if (points.length < 2) return;
+
+  const tooltip = document.getElementById('chart-tooltip');
+  const rect = container.getBoundingClientRect();
+  const W = container.clientWidth;
+  const H = 280;
+  const pad = { top: 20, right: 20, bottom: 40, left: 70 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  // Scales
+  const xMin = 0;
+  const xMax = Math.max(...points.map(p => p.x));
+  const yVals = points.map(p => p.y);
+  let yMin = Math.min(...yVals);
+  let yMax = Math.max(...yVals);
+  // Add padding
+  const yRange = yMax - yMin || 1;
+  yMin -= yRange * 0.1;
+  yMax += yRange * 0.1;
+
+  const sx = x => pad.left + ((x - xMin) / (xMax - xMin || 1)) * cw;
+  const sy = y => pad.top + (1 - (y - yMin) / (yMax - yMin)) * ch;
+
+  // Build SVG
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // Grid lines
+  const yTicks = 5;
+  for (let i = 0; i <= yTicks; i++) {
+    const y = pad.top + (i / yTicks) * ch;
+    const val = yMax - (i / yTicks) * (yMax - yMin);
+    svg += `<line x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+
+    const label = mode === 'cost' ? fmtCost(val) : mode === 'latency' ? fmtLatency(val) : val.toFixed(2);
+    svg += `<text x="${pad.left - 8}" y="${y + 4}" text-anchor="end" fill="var(--text-muted)" font-size="11" font-family="inherit">${label}</text>`;
+  }
+
+  // X-axis labels
+  for (const p of points) {
+    const x = sx(p.x);
+    const label = p.x === 0 ? 'B' : p.x.toString();
+    svg += `<text x="${x}" y="${H - 8}" text-anchor="middle" fill="var(--text-muted)" font-size="11" font-family="inherit">${label}</text>`;
+  }
+
+  // Re-baseline markers (amber dashed vertical lines)
+  for (const rb of DATA.rebaselineEvents) {
+    const xPos = sx(rb.afterIterIndex + 0.5);
+    svg += `<line x1="${xPos}" y1="${pad.top}" x2="${xPos}" y2="${pad.top + ch}" stroke="var(--chart-rebaseline)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.7"/>`;
+    svg += `<text x="${xPos}" y="${pad.top - 4}" text-anchor="middle" fill="var(--chart-rebaseline)" font-size="10" font-family="inherit">re-eval</text>`;
+  }
+
+  // Accepted path line
+  const accepted = points.filter(p => p.status === 'baseline' || p.status === 'accepted');
+  if (accepted.length >= 2) {
+    const pathD = accepted.map((p, i) => `${i === 0 ? 'M' : 'L'} ${sx(p.x)} ${sy(p.y)}`).join(' ');
+    svg += `<path d="${pathD}" fill="none" stroke="var(--chart-accepted)" stroke-width="2" opacity="0.8"/>`;
+  }
+
+  // Rejected branch lines (from parent accepted to rejected point)
+  let lastAcceptedX = 0;
+  let lastAcceptedY = points[0].y;
+  for (const p of points) {
+    if (p.status === 'rejected') {
+      svg += `<line x1="${sx(lastAcceptedX)}" y1="${sy(lastAcceptedY)}" x2="${sx(p.x)}" y2="${sy(p.y)}" stroke="var(--chart-rejected)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.5"/>`;
+    }
+    if (p.status === 'accepted' || p.status === 'baseline') {
+      lastAcceptedX = p.x;
+      lastAcceptedY = p.y;
+    }
+  }
+
+  // Dots
+  for (const p of points) {
+    const cx = sx(p.x);
+    const cy = sy(p.y);
+    const r = 5;
+
+    if (p.status === 'baseline') {
+      svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="var(--chart-baseline)" stroke="var(--bg-card)" stroke-width="2"/>`;
+    } else if (p.status === 'accepted') {
+      svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="var(--chart-accepted)" stroke="var(--bg-card)" stroke-width="2"/>`;
+    } else {
+      // Rejected: hollow X
+      svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--chart-rejected)" stroke-width="2"/>`;
+      const s = 3;
+      svg += `<line x1="${cx-s}" y1="${cy-s}" x2="${cx+s}" y2="${cy+s}" stroke="var(--chart-rejected)" stroke-width="1.5"/>`;
+      svg += `<line x1="${cx+s}" y1="${cy-s}" x2="${cx-s}" y2="${cy+s}" stroke="var(--chart-rejected)" stroke-width="1.5"/>`;
+    }
+
+    // Invisible hover target
+    svg += `<circle cx="${cx}" cy="${cy}" r="14" fill="transparent" data-idx="${points.indexOf(p)}" class="hover-dot"/>`;
+  }
+
+  svg += '</svg>';
+
+  // Remove old SVG, keep tooltip
+  const oldSvg = container.querySelector('svg');
+  if (oldSvg) oldSvg.remove();
+  container.insertAdjacentHTML('afterbegin', svg);
+
+  // Hover interactions
+  container.querySelectorAll('.hover-dot').forEach(dot => {
+    dot.addEventListener('mouseenter', e => {
+      const idx = parseInt(e.target.dataset.idx);
+      const p = points[idx];
+      if (!p) return;
+      const val = mode === 'cost' ? fmtCost(p.y) : mode === 'latency' ? fmtLatency(p.y) : fmtQuality(p.y);
+      tooltip.innerHTML = `<strong>${escHtml(p.label)}</strong><br>${mode}: ${val}${p.delta ? '<br>' + escHtml(p.delta) : ''}`;
+      tooltip.classList.add('visible');
+      const tx = sx(p.x);
+      const ty = sy(p.y);
+      tooltip.style.left = Math.min(tx + 10, W - 160) + 'px';
+      tooltip.style.top = (ty - 60) + 'px';
+    });
+    dot.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+  });
+}
+
+let currentChartMode = 'cost';
+function switchChartMode(mode) {
+  currentChartMode = mode;
+  document.querySelectorAll('.chart-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  drawChart('journey-chart', mode);
+}
+
+// ── Iteration List ────────────────────────────────────────────────
+
+function renderIterations() {
+  if (DATA.iterations.length === 0) return '';
+
+  let html = `
+    <div class="iterations-section">
+      <h2>Iteration Log</h2>
+      <div class="iter-timeline">
+        <div class="baseline-card">
+          <div class="iter-dot accepted" style="background: var(--blue); border-color: var(--blue);"></div>
+          <div class="iter-header">
+            <span class="iter-name">Baseline</span>
+          </div>
+          <div class="baseline-metrics">
+            <div>Cost: <span>${fmtCost(DATA.baseline.cost)}</span></div>
+            <div>Latency: <span>${fmtLatency(DATA.baseline.latency)}</span></div>
+            <div>Quality: <span>${fmtQuality(DATA.baseline.quality)}</span></div>
+          </div>
+        </div>`;
+
+  for (const iter of DATA.iterations) {
+    const statusBadge = iter.status === 'accepted'
+      ? '<span class="badge badge-green">accepted</span>'
+      : '<span class="badge badge-red">rejected</span>';
+    const deltaClass = iter.status === 'accepted' ? 'delta-positive' : 'delta-negative';
+
+    html += `
+        <div class="iter-card">
+          <div class="iter-dot ${iter.status}"></div>
+          <div class="iter-header">
+            <span class="iter-num">#${iter.index}</span>
+            <span class="iter-name">${escHtml(iter.name)}</span>
+            ${statusBadge}
+          </div>
+          ${iter.strategy ? `<div class="iter-strategy">${escHtml(iter.strategy)}</div>` : ''}
+          ${iter.delta ? `<div class="iter-delta ${deltaClass}">${escHtml(iter.delta)}</div>` : ''}
+          ${iter.insight ? `<div class="iter-insight">${escHtml(iter.insight)}</div>` : ''}
+        </div>`;
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
+// ── Active Optimizations & Learned Principles ─────────────────────
+
+function renderDetails() {
+  const opts = DATA.activeOptimizations;
+  const principles = DATA.learnedPrinciples;
+  if (opts.length === 0 && principles.length === 0) return '';
+
+  let html = '';
+
+  if (opts.length > 0) {
+    html += `
+      <div class="details-section">
+        <h2>Active Optimizations</h2>
+        <ul class="details-list">
+          ${opts.map(o => `<li>${escHtml(o)}</li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  if (principles.length > 0) {
+    html += `
+      <div class="details-section">
+        <h2>Learned Principles</h2>
+        <ul class="details-list">
+          ${principles.map(p => `<li>${escHtml(p)}</li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  return html;
+}
+
+// ── Query Table (eval mode) ───────────────────────────────────────
+
+function renderQueryTable() {
+  if (!DATA.queryDetails || DATA.queryDetails.length === 0) return '';
+
+  let html = `
+    <div class="details-section">
+      <h2>Per-Query Results</h2>
+      <table class="query-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Query</th>
+            <th class="num">Quality</th>
+            <th class="num">Cost</th>
+            <th class="num">Latency</th>
+            <th class="num">Tokens</th>
+            <th class="num">Steps</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+  DATA.queryDetails.forEach((q, i) => {
+    html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td class="query-text" title="${escHtml(q.query)}">${escHtml(q.query)}</td>
+            <td class="num">${q.quality.toFixed(1)}/5</td>
+            <td class="num">${fmtCost(q.cost)}</td>
+            <td class="num">${fmtLatency(q.latency)}</td>
+            <td class="num">${fmtTokens(q.tokens)}</td>
+            <td class="num">${q.steps}</td>
+          </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  return html;
+}
+
+// ── Footer ────────────────────────────────────────────────────────
+
+function renderFooter() {
+  const ts = new Date(DATA.generatedAt).toLocaleString();
+  return `
+    <div class="footer">
+      Generated by <a href="https://github.com/aryandaga/autoperf-ai">autoperf-ai</a> on ${escHtml(ts)}
+    </div>`;
+}
+
+// ── Main Render ───────────────────────────────────────────────────
+
+function render() {
+  const app = document.getElementById('app');
+  const title = DATA.mode === 'eval' ? 'Eval Report' : 'Optimization Report';
+  const accepted = DATA.iterations.filter(i => i.status === 'accepted').length;
+  const total = DATA.iterations.length;
+  const subtitle = DATA.mode === 'eval'
+    ? `Baseline evaluation for ${DATA.target.name}`
+    : `${accepted}/${total} iterations accepted for ${DATA.target.name}`;
+
+  app.innerHTML = `
+    <div class="header">
+      <h1>${escHtml(title)}</h1>
+      <div class="subtitle">${escHtml(subtitle)}</div>
+    </div>
+    ${renderMetricStrip()}
+    ${renderJourneyChart()}
+    ${renderIterations()}
+    ${renderQueryTable()}
+    ${renderDetails()}
+    ${renderFooter()}
+  `;
+
+  // Draw chart after DOM is ready
+  if (DATA.mode !== 'eval' && DATA.iterations.length > 0) {
+    requestAnimationFrame(() => drawChart('journey-chart', 'cost'));
+  }
+}
+
+if (DATA) {
+  render();
+} else {
+  document.getElementById('app').innerHTML =
+    '<p style="color:var(--text-muted);padding:40px;text-align:center;">No data found. This report may be corrupted.</p>';
+}
+</script>
+</body>
+</html>

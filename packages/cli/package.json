@@ -1,0 +1,77 @@
+{
+  "name": "autoperf-ai",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Autonomous AI agent performance optimizer",
+  "license": "MIT",
+  "bin": {
+    "autoperf": "./bin/autoperf.js"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "data/"
+  ],
+  "exports": {
+    "./infra": {
+      "types": "./dist/infra/index.d.ts",
+      "default": "./dist/infra/index.js"
+    },
+    "./stats": {
+      "types": "./dist/stats/index.d.ts",
+      "default": "./dist/stats/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aryandaga7/autoperf-ai.git"
+  },
+  "homepage": "https://github.com/aryandaga7/autoperf-ai",
+  "keywords": [
+    "ai",
+    "agent",
+    "eval",
+    "optimization",
+    "ai-sdk",
+    "claude",
+    "performance",
+    "cost-reduction",
+    "llm"
+  ],
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ai": "^6.0.152",
+    "commander": "^13.1.0",
+    "dotenv": "^17.4.2",
+    "execa": "^9.5.2",
+    "tsx": "^4.19.0",
+    "zod": "^3.24.0"
+  },
+  "peerDependencies": {
+    "@ai-sdk/openai": "^3.0.0",
+    "@ai-sdk/google": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@ai-sdk/openai": {
+      "optional": true
+    },
+    "@ai-sdk/google": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.1.1"
+  }
+}

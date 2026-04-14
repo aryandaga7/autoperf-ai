@@ -1,0 +1,13 @@
+{
+  "name": "@autoperf/weather-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
+    "@ai-sdk/google": "^3.0.61",
+    "@ai-sdk/openai": "^3.0.52",
+    "ai": "^6.0.152",
+    "zod": "^3.24.0"
+  }
+}

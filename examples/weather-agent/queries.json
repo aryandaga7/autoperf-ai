@@ -1,0 +1,32 @@
+[
+  {
+    "query": "What's the weather in San Francisco?",
+    "expectedBehavior": "Calls weather tool for San Francisco, reports temperature (62F), condition (Foggy), humidity (75%), wind speed (12 mph).",
+    "shouldCallTool": true,
+    "expectedTools": ["getWeather"]
+  },
+  {
+    "query": "Compare the weather in Tokyo and London.",
+    "expectedBehavior": "Calls weather tool twice (Tokyo and London), compares conditions. Tokyo: 78F Sunny. London: 58F Rainy. Notes the contrast.",
+    "shouldCallTool": true,
+    "expectedTools": ["getWeather"]
+  },
+  {
+    "query": "Should I bring an umbrella in Seattle?",
+    "expectedBehavior": "Calls weather tool for Seattle, sees Rainy condition and 90% humidity, recommends bringing an umbrella.",
+    "shouldCallTool": true,
+    "expectedTools": ["getWeather"]
+  },
+  {
+    "query": "Tell me a joke.",
+    "expectedBehavior": "Does NOT call weather tool. Politely declines or redirects, explaining it can only help with weather questions.",
+    "shouldCallTool": false,
+    "expectedTools": []
+  },
+  {
+    "query": "What's the temperature in Paris?",
+    "expectedBehavior": "Calls weather tool for Paris, reports temperature (68F). Focused response on temperature specifically.",
+    "shouldCallTool": true,
+    "expectedTools": ["getWeather"]
+  }
+]

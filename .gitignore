@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.autoperf/
+_drafts/
+*.tsbuildinfo
+*.tgz
+.DS_Store

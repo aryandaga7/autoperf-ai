@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" width="640" height="160">
+  <!-- README Hero — Logo + Name lockup (for light backgrounds / light mode) -->
+  <defs>
+    <style>
+      .mark { fill: #000; }
+      .name { fill: #000; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 56px; font-weight: 700; letter-spacing: -2px; }
+      .tag { fill: #666; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 18px; font-weight: 400; letter-spacing: -0.3px; }
+    </style>
+  </defs>
+
+  <!-- Performance Delta mark -->
+  <g transform="translate(60, 25)">
+    <path class="mark" d="M50,0 L0,90 L100,90 Z M25,45 L75,45 L80,54 L20,54 Z" fill-rule="evenodd"/>
+  </g>
+
+  <!-- "autoperf" -->
+  <text class="name" x="200" y="92">autoperf</text>
+
+  <!-- Tagline -->
+  <text class="tag" x="203" y="125">Autonomous AI Agent Optimizer</text>
+</svg>
