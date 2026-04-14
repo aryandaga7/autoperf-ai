@@ -60,20 +60,45 @@ What makes the iteration agents effective is the curated environment they run in
 
 All of this is configurable. The default setup targets Vercel AI SDK agents, but the MCP servers, skills, and meta-knowledge can be swapped for any framework or use case.
 
+## Prerequisites
+
+- **Node.js 20+**
+- **`ANTHROPIC_API_KEY`** — for eval judging. Set in `.env` or environment.
+- **Claude Code auth** — for `optimize` and `setup` only. `eval` works without it.
+- Optional: `@ai-sdk/openai` or `@ai-sdk/google` for alternative judge models.
+
+## Installation
+
+No install required — run directly via npx:
+
+```bash
+npx autoperf-ai eval --help
+```
+
+Or install globally:
+
+```bash
+npm install -g autoperf-ai
+```
+
 ## Quick Start
 
 ### 1. Evaluate your agent
 
 ```bash
+export ANTHROPIC_API_KEY=sk-ant-...
 npx autoperf-ai eval \
   --target ./my-agent \
   --queries ./my-agent/queries.json
 ```
 
-Your agent needs one export:
+Your agent directory needs `ai` and your provider SDK installed (`npm install ai @ai-sdk/anthropic`), and an `agent.ts` that exports `createAgent()`:
 
 ```typescript
 // my-agent/agent.ts
+import { ToolLoopAgent } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+
 export function createAgent() {
   return new ToolLoopAgent({
     model: anthropic("claude-sonnet-4-6"),
@@ -84,7 +109,7 @@ export function createAgent() {
 }
 ```
 
-Returns `{ generate({ prompt }) }` → `{ text?, steps? }`. Any AI SDK `ToolLoopAgent` works, or a plain object wrapping `generateText`.
+Returns `{ generate({ prompt }) }` → `{ text, steps? }`. Any AI SDK `ToolLoopAgent` works, or a plain object wrapping `generateText`.
 
 ### 2. Optimize
 
@@ -135,13 +160,6 @@ See [`examples/weather-agent/`](examples/weather-agent/) for a working example.
 | `--runs-per-query` | eval           | `1`                 | Repeat each query N times (reduces noise)    |
 | `--judge-model`    | eval           | `claude-sonnet-4-6` | Judge model ID. Requires provider's API key  |
 | `--no-report`      | eval, optimize | —                   | Skip HTML report generation                  |
-
-## Prerequisites
-
-- **Node.js 20+**
-- **`ANTHROPIC_API_KEY`** — for eval judging. Set in `.env` or environment.
-- **Claude Code auth** — for `optimize` and `setup` only. `eval` works without it.
-- Optional: `@ai-sdk/openai` or `@ai-sdk/google` for alternative judge models.
 
 ## Safety
 
