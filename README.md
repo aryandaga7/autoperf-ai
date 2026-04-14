@@ -96,14 +96,19 @@ Your agent directory needs `ai` and your provider SDK installed (`npm install ai
 
 ```typescript
 // my-agent/agent.ts
-import { ToolLoopAgent } from "ai";
+import { ToolLoopAgent, tool } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { z } from "zod";
 
 export function createAgent() {
   return new ToolLoopAgent({
     model: anthropic("claude-sonnet-4-6"),
     tools: {
-      /* your tools */
+      myTool: tool({
+        description: "Describe what this tool does",
+        inputSchema: z.object({ input: z.string() }),
+        execute: async ({ input }) => `result for ${input}`,
+      }),
     },
   });
 }
@@ -139,12 +144,12 @@ See [`examples/weather-agent/`](examples/weather-agent/) for a working example.
 
 ## Commands
 
-| Command             | What it does                              | Requires CC? |
-| ------------------- | ----------------------------------------- | ------------ |
-| `autoperf eval`     | Measure baseline performance              | No           |
-| `autoperf optimize` | Run autonomous optimization loop          | Yes          |
-| `autoperf report`   | Regenerate HTML report from existing data | No           |
-| `autoperf setup`    | Install CC plugins + MCP servers          | Yes          |
+| Command              | What it does                     | Requires CC? |
+| -------------------- | -------------------------------- | ------------ |
+| `autoperf eval`      | Measure baseline performance     | No           |
+| `autoperf optimize`  | Run autonomous optimization loop | Yes          |
+| `autoperf dashboard` | Visualize optimization results   | No           |
+| `autoperf setup`     | Install CC plugins + MCP servers | Yes          |
 
 ### Key flags
 
@@ -159,7 +164,7 @@ See [`examples/weather-agent/`](examples/weather-agent/) for a working example.
 | `--concurrency`    | eval           | `3`                 | Parallel eval runs                           |
 | `--runs-per-query` | eval           | `1`                 | Repeat each query N times (reduces noise)    |
 | `--judge-model`    | eval           | `claude-sonnet-4-6` | Judge model ID. Requires provider's API key  |
-| `--no-report`      | eval, optimize | —                   | Skip HTML report generation                  |
+| `--eval-tier`      | optimize       | `1`                 | Runs per query during optimization evals     |
 
 ## Safety
 
